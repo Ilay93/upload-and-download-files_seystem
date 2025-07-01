@@ -4,17 +4,13 @@ import os
 
 def get_file_data_from_client(client_sock: socket.socket):
     file_name = client_sock.recv(1024).decode()
-    file_size = int(client_sock.recv(1024).decode())
-    
-    write_file_from_client(client_sock, os.path.join("files_stored", file_name), file_size)
-
-
-def write_file_from_client(client_sock: socket.socket, path: str, size: int) -> None:
-    with open(path, "wb") as file:
-        while size > 0:
+    file_size = int(client_sock.recv(30).decode())
+    data_remaining = file_size
+    with open(os.path.join("files_stored", file_name), "wb") as file:
+        while data_remaining > 0:
             chunk = client_sock.recv(1024)
             file.write(chunk)
-            size -= len(chunk)
+            data_remaining -= len(chunk)
 
 
 def send_file_data(client_sock: socket.socket) -> None:
@@ -44,11 +40,11 @@ def main():
 
     while True:
         client_socket, addr = server_socket.accept()
-        method = client_socket.recv(1024).decode()
+        method = client_socket.recv(1).decode()
 
-        if method == "upload":
+        if method == "0":
             get_file_data_from_client(client_socket)
-        elif method == "download":
+        elif method == "1":
             send_file_data(client_socket)
         else:
             print(method)

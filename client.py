@@ -3,23 +3,24 @@ import os
 
 
 def send_file(sock: socket.socket, file_path: str, file_name: str) -> None:
-    sock.send("upload".encode())
+    sock.send("0".encode())
     sock.send(file_name.encode())
 
-    file_size = os.path.getsize(file_path)
-    sock.send(str(file_size).encode())
+    full_file_path = os.path.join(file_path, file_name)
+    file_size = os.path.getsize(full_file_path)
 
     with open(os.path.join(file_path, file_name), mode="rb") as file:
         data = file.read()
-
+        
+    sock.send(str(file_size).encode())
     sock.sendall(data)
 
 
 def download_file_from_server(sock: socket.socket, download_file_name: str, save_file_path: str) -> None:
-    sock.send("download".encode())
+    sock.send("1".encode())
     sock.send(download_file_name.encode())
     
-    status = sock.recv(1024).decode()
+    status = sock.recv(1).decode()
     if status == "1":
         size = int(sock.recv(1024).decode())
         data_remaining = size
@@ -34,16 +35,18 @@ def download_file_from_server(sock: socket.socket, download_file_name: str, save
 
 
 def main():
-    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    my_socket.connect(("127.0.0.1", 8080))
+    
  
     upload_or_download_option = input("Enter action download/upload: ")
     while upload_or_download_option != "download" and upload_or_download_option != "upload":
         upload_or_download_option = input("You didn't enter one of the options. Enter action download/upload: ")
 
+    my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    my_socket.connect(("127.0.0.1", 8080))
+
     if upload_or_download_option == "upload":
         file_path = input("enter the path for the file you want to upload (without the name of the file): ")
-        file_name = input("Enter the name of the file you want to download: ")
+        file_name = input("Enter the name of the file you want to upload: ")
 
         while not os.path.exists(os.path.join(file_path, file_name)):
             print(f"The file location: {os.path.join(file_path, file_name)} you entered does no exist ")
